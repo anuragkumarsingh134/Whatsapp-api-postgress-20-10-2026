@@ -1,11 +1,16 @@
 const { dbGet } = require('../config/db');
+const { isSubscriptionActive } = require('../services/quotaService');
 
 /**
  * API Key middleware for message endpoints.
  * Reads `apiKey` and `deviceId` from query string.
- * Validates the key exists, that the device belongs to the key's user,
- * and that the user's trial/plan has not expired.
- * Sets req.apiUser and req.device on success.
+ * Validates:
+ * 1. API key existence and account active status
+ * 2. Subscription validity (active trial or paid plan) via quotaService
+ * 3. Device existence and ownership by the key holder
+ * 4. Device connectivity state (must be 'connected')
+ * 
+ * Sets req.apiUser (fully hydrated with message limits) and req.device on success.
  */
 async function apiKeyMiddleware(req, res, next) {
     try {
@@ -19,29 +24,29 @@ async function apiKeyMiddleware(req, res, next) {
             return res.status(400).json({ success: false, error: 'Missing deviceId parameter' });
         }
 
-        // Look up user by API key (include trial/plan fields)
+        // Look up user by API key (include subscription and message limit fields)
         const user = await dbGet(
-            'SELECT id, email, role, trial_expires_at, plan_expires_at, current_plan_id FROM users WHERE api_key = ?',
+            `SELECT id, email, role, device_limit, message_limit, messages_sent_today, 
+                    last_message_reset, trial_expires_at, plan_expires_at, current_plan_id, is_active 
+             FROM users WHERE api_key = ?`,
             [apiKey]
         );
+
         if (!user) {
             return res.status(401).json({ success: false, error: 'Invalid API key' });
         }
 
-        // Check trial/plan expiry (admins are exempt)
-        if (user.role !== 'admin') {
-            const now = new Date();
-            const trialExpired = user.trial_expires_at && new Date(user.trial_expires_at) < now;
-            const planActive = user.current_plan_id &&
-                (!user.plan_expires_at || new Date(user.plan_expires_at) >= now);
+        if (!user.is_active) {
+            return res.status(403).json({ success: false, error: 'Account has been disabled. Contact admin.' });
+        }
 
-            if (trialExpired && !planActive) {
-                return res.status(402).json({
-                    success: false,
-                    error: 'TRIAL_EXPIRED',
-                    message: 'Trial has expired. Please contact the administrator to activate a plan.',
-                });
-            }
+        // Validate trial/plan expiration
+        if (!isSubscriptionActive(user)) {
+            return res.status(402).json({
+                success: false,
+                error: 'TRIAL_EXPIRED',
+                message: 'Trial has expired. Please contact the administrator to activate a plan.',
+            });
         }
 
         // Look up device and verify ownership
@@ -55,7 +60,7 @@ async function apiKeyMiddleware(req, res, next) {
         }
 
         if (device.status !== 'connected') {
-            return res.status(404).json({ success: false, error: 'Device is not connected. Current status: ' + device.status });
+            return res.status(404).json({ success: false, error: `Device is not connected. Current status: ${device.status}` });
         }
 
         req.apiUser = user;

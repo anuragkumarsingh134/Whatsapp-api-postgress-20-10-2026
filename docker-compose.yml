@@ -1,0 +1,66 @@
+services:
+  # ── 1. WA-API Express Gateway ───────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wa_api_app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - JWT_SECRET=change_this_to_a_long_random_jwt_secret_key_in_production
+      - DATABASE_URL=postgresql://wa_user:wa_secure_password_2026@postgres:5432/whatsapp_api
+      - REDIS_URL=redis://redis:6379
+      - CASHFREE_ENV=sandbox
+      - CASHFREE_APP_ID=
+      - CASHFREE_SECRET_KEY=
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── 2. PostgreSQL Relational Database ───────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: wa_api_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: wa_user
+      POSTGRES_PASSWORD: wa_secure_password_2026
+      POSTGRES_DB: whatsapp_api
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wa_user -d whatsapp_api"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── 3. Redis Distributed Session & State Store ──────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: wa_api_redis
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local

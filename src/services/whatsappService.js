@@ -1,28 +1,92 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason,
-    fetchLatestBaileysVersion, makeCacheableSignalKeyStore } = require('@whiskeysockets/baileys');
+const {
+    default: makeWASocket,
+    DisconnectReason,
+    fetchLatestBaileysVersion,
+    makeCacheableSignalKeyStore,
+} = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const qrcode = require('qrcode');
-const { dbRun, dbGet } = require('../config/db');
+const { dbRun, dbAll } = require('../config/db');
 const sessionManager = require('./sessionManager');
+const { useRedisAuthState, purgeRedisAuthState } = require('../utils/useRedisAuthState');
 
-const AUTH_DIR = path.join(__dirname, '..', '..', 'auth_info_baileys');
 const logger = pino({ level: 'silent' });
-
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MB
+const RECONNECT_DELAY_MS = 5000;
 
 /**
- * Create a new Baileys session for a device.
+ * Downloads a media asset from a remote HTTPS URL with strict size and content-type validation.
+ * 
+ * @param {string} url - Remote asset URL (must use HTTPS)
+ * @param {string|RegExp} mimeValidator - Required MIME string pattern (e.g. 'application/pdf' or /^image\//)
+ * @param {string} typeLabel - Descriptive label for error reporting (e.g. 'PDF' or 'image')
+ * @returns {Promise<Buffer>} Validated binary file buffer
  */
-async function createSession(deviceId) {
-    const authDir = path.join(AUTH_DIR, deviceId);
-    if (!fs.existsSync(authDir)) {
-        fs.mkdirSync(authDir, { recursive: true });
+async function downloadMediaBuffer(url, mimeValidator, typeLabel) {
+    if (!url || typeof url !== 'string' || !url.startsWith('https://')) {
+        throw new Error(`${typeLabel} URL must use HTTPS`);
     }
 
-    const { state, saveCreds } = await useMultiFileAuthState(authDir);
+    const response = await axios.get(url, {
+        responseType: 'arraybuffer',
+        maxContentLength: MAX_FILE_SIZE,
+        timeout: 30000,
+        headers: { 'User-Agent': 'WhatsApp-API/1.0' },
+    });
+
+    const contentType = response.headers['content-type'] || '';
+    const isValidMime = typeof mimeValidator === 'string'
+        ? contentType.includes(mimeValidator)
+        : mimeValidator.test(contentType);
+
+    if (!isValidMime) {
+        throw new Error(`Invalid content type: "${contentType}". Only ${typeLabel} files are supported.`);
+    }
+
+    const buffer = Buffer.from(response.data);
+    if (buffer.length > MAX_FILE_SIZE) {
+        throw new Error(`File size (${(buffer.length / (1024 * 1024)).toFixed(1)}MB) exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
+    }
+
+    return buffer;
+}
+
+/**
+ * Format a phone number or Group ID into a valid WhatsApp JID.
+ * 
+ * @param {string} number - Phone number with country code or Group JID
+ * @returns {string} Fully qualified JID (e.g. 919876543210@s.whatsapp.net or 123-456@g.us)
+ */
+function formatJID(number) {
+    if (number.includes('@')) {
+        return number;
+    }
+    const clean = number.replace(/\D/g, '');
+    return `${clean}@s.whatsapp.net`;
+}
+
+/**
+ * Create or reconnect a Baileys WhatsApp session for a device.
+ * 
+ * Manages socket initialization, credential storage, QR emission, and reconnect timers.
+ * 
+ * @param {string} deviceId - Unique device identifier (phone number)
+ * @returns {Promise<Object>} Active WASocket instance
+ */
+async function createSession(deviceId) {
+    // Cancel any existing reconnect timers for this device
+    sessionManager.clearReconnectTimer(deviceId);
+
+    // Evict any previous socket from memory to prevent duplicate event listeners
+    const existingSocket = sessionManager.getSession(deviceId);
+    if (existingSocket) {
+        sessionManager.cleanupSocket(existingSocket);
+    }
+
+    const { state, saveCreds } = await useRedisAuthState(deviceId);
     const { version } = await fetchLatestBaileysVersion();
 
     const socket = makeWASocket({
@@ -36,12 +100,11 @@ async function createSession(deviceId) {
         generateHighQualityLinkPreview: false,
     });
 
-    // Handle connection updates
+    // Connection lifecycle observer
     socket.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
-            // Store QR code as base64 data URL
             try {
                 const qrDataUrl = await qrcode.toDataURL(qr);
                 sessionManager.setQR(deviceId, qrDataUrl);
@@ -54,54 +117,60 @@ async function createSession(deviceId) {
         if (connection === 'open') {
             console.log(`[${deviceId}] Connected to WhatsApp`);
             sessionManager.clearQR(deviceId);
+            sessionManager.clearReconnectTimer(deviceId);
             await dbRun('UPDATE devices SET status = ? WHERE device_id = ?', ['connected', deviceId]);
         }
 
         if (connection === 'close') {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
-            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+            const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+            const shouldReconnect = !isLoggedOut;
 
-            console.log(`[${deviceId}] Connection closed. Status: ${statusCode}. Reconnect: ${shouldReconnect}`);
-
+            console.log(`[${deviceId}] Connection closed (status: ${statusCode}, shouldReconnect: ${shouldReconnect})`);
             sessionManager.removeSession(deviceId);
 
             if (shouldReconnect) {
-                // Attempt to reconnect
                 await dbRun('UPDATE devices SET status = ? WHERE device_id = ?', ['disconnected', deviceId]);
-                setTimeout(() => {
+
+                // Schedule managed reconnection with timer tracking
+                const timer = setTimeout(() => {
                     console.log(`[${deviceId}] Attempting reconnection...`);
                     createSession(deviceId).catch((err) => {
                         console.error(`[${deviceId}] Reconnection failed:`, err.message);
                     });
-                }, 5000);
+                }, RECONNECT_DELAY_MS);
+
+                sessionManager.setReconnectTimer(deviceId, timer);
             } else {
-                // Logged out — clean up auth state
+                // Device was logged out from WhatsApp client — purge auth credentials from Redis
                 await dbRun('UPDATE devices SET status = ? WHERE device_id = ?', ['pending', deviceId]);
-                try {
-                    fs.rmSync(path.join(AUTH_DIR, deviceId), { recursive: true, force: true });
-                } catch (_) { }
+                await purgeRedisAuthState(deviceId);
             }
         }
     });
 
-    // Persist credentials on update
+    // Save auth credentials whenever updated
     socket.ev.on('creds.update', saveCreds);
 
-    // Store in session manager
+    // Register active socket in session manager
     sessionManager.setSession(deviceId, socket);
 
     return socket;
 }
 
 /**
- * Get QR code as base64 data URL for a device.
+ * Retrieve QR code as base64 Data URL for a pending device.
+ * @param {string} deviceId
+ * @returns {string|null}
  */
 function getQR(deviceId) {
     return sessionManager.getQR(deviceId);
 }
 
 /**
- * Get profile picture URL for a connected device.
+ * Fetch profile picture URL for a connected device.
+ * @param {string} deviceId
+ * @returns {Promise<string|null>}
  */
 async function getProfilePicture(deviceId) {
     const socket = sessionManager.getSession(deviceId);
@@ -117,7 +186,12 @@ async function getProfilePicture(deviceId) {
 }
 
 /**
- * Send a text message via a connected device.
+ * Send a plain-text message via an active Baileys socket.
+ * 
+ * @param {string} deviceId - Connected device ID
+ * @param {string} number - Recipient phone number or Group JID
+ * @param {string} message - Text message content
+ * @returns {Promise<{ messageId: string, status: string }>}
  */
 async function sendTextMessage(deviceId, number, message) {
     const socket = sessionManager.getSession(deviceId);
@@ -128,7 +202,6 @@ async function sendTextMessage(deviceId, number, message) {
     const jid = formatJID(number);
     const result = await socket.sendMessage(jid, { text: message });
 
-    // Log to database
     await dbRun(
         'INSERT INTO messages (device_id, recipient, message_type, status, message_id) VALUES (?, ?, ?, ?, ?)',
         [deviceId, number, 'text', 'sent', result.key.id]
@@ -138,7 +211,13 @@ async function sendTextMessage(deviceId, number, message) {
 }
 
 /**
- * Send a PDF file via a connected device.
+ * Download and send a PDF document via an active Baileys socket.
+ * 
+ * @param {string} deviceId - Connected device ID
+ * @param {string} number - Recipient phone number or Group JID
+ * @param {string} url - HTTPS URL pointing to the PDF document
+ * @param {string} fileName - Destination document file name
+ * @returns {Promise<{ messageId: string, status: string }>}
  */
 async function sendFileMessage(deviceId, number, url, fileName) {
     const socket = sessionManager.getSession(deviceId);
@@ -146,40 +225,17 @@ async function sendFileMessage(deviceId, number, url, fileName) {
         throw new Error('Session not found or not connected');
     }
 
-    // Validate HTTPS
-    if (!url.startsWith('https://')) {
-        throw new Error('File URL must use HTTPS');
-    }
-
-    // Download the file
-    const response = await axios.get(url, {
-        responseType: 'arraybuffer',
-        maxContentLength: MAX_FILE_SIZE,
-        timeout: 30000,
-        headers: { 'User-Agent': 'WhatsApp-API/1.0' },
-    });
-
-    // Validate content type
-    const contentType = response.headers['content-type'] || '';
-    if (!contentType.includes('application/pdf')) {
-        throw new Error(`Invalid content type: ${contentType}. Only PDF files are supported.`);
-    }
-
-    // Validate file size
-    const fileBuffer = Buffer.from(response.data);
-    if (fileBuffer.length > MAX_FILE_SIZE) {
-        throw new Error(`File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
-    }
-
+    const fileBuffer = await downloadMediaBuffer(url, 'application/pdf', 'PDF');
     const jid = formatJID(number);
+    const finalFileName = fileName || 'document.pdf';
+
     const result = await socket.sendMessage(jid, {
         document: fileBuffer,
         mimetype: 'application/pdf',
-        fileName: fileName || 'document.pdf',
-        caption: fileName || 'document.pdf',
+        fileName: finalFileName,
+        caption: finalFileName,
     });
 
-    // Log to database
     await dbRun(
         'INSERT INTO messages (device_id, recipient, message_type, status, message_id) VALUES (?, ?, ?, ?, ?)',
         [deviceId, number, 'file', 'sent', result.key.id]
@@ -189,7 +245,13 @@ async function sendFileMessage(deviceId, number, url, fileName) {
 }
 
 /**
- * Send an image file via a connected device.
+ * Download and send an image file via an active Baileys socket.
+ * 
+ * @param {string} deviceId - Connected device ID
+ * @param {string} number - Recipient phone number or Group JID
+ * @param {string} url - HTTPS URL pointing to the image
+ * @param {string} [caption] - Optional caption for the image
+ * @returns {Promise<{ messageId: string, status: string }>}
  */
 async function sendImageMessage(deviceId, number, url, caption) {
     const socket = sessionManager.getSession(deviceId);
@@ -197,38 +259,14 @@ async function sendImageMessage(deviceId, number, url, caption) {
         throw new Error('Session not found or not connected');
     }
 
-    // Validate HTTPS
-    if (!url.startsWith('https://')) {
-        throw new Error('Image URL must use HTTPS');
-    }
-
-    // Download the file
-    const response = await axios.get(url, {
-        responseType: 'arraybuffer',
-        maxContentLength: MAX_FILE_SIZE,
-        timeout: 30000,
-        headers: { 'User-Agent': 'WhatsApp-API/1.0' },
-    });
-
-    // Validate content type
-    const contentType = response.headers['content-type'] || '';
-    if (!contentType.startsWith('image/')) {
-        throw new Error(`Invalid content type: ${contentType}. Only image files are supported.`);
-    }
-
-    // Validate file size
-    const fileBuffer = Buffer.from(response.data);
-    if (fileBuffer.length > MAX_FILE_SIZE) {
-        throw new Error(`File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
-    }
-
+    const imageBuffer = await downloadMediaBuffer(url, /^image\//, 'image');
     const jid = formatJID(number);
+
     const result = await socket.sendMessage(jid, {
-        image: fileBuffer,
+        image: imageBuffer,
         caption: caption || '',
     });
 
-    // Log to database
     await dbRun(
         'INSERT INTO messages (device_id, recipient, message_type, status, message_id) VALUES (?, ?, ?, ?, ?)',
         [deviceId, number, 'image', 'sent', result.key.id]
@@ -238,45 +276,10 @@ async function sendImageMessage(deviceId, number, url, caption) {
 }
 
 /**
- * Restore all previously connected sessions on server startup.
- */
-async function restoreAllSessions() {
-    try {
-        const { dbAll } = require('../config/db');
-        const devices = await dbAll("SELECT device_id FROM devices WHERE status IN ('connected', 'disconnected')");
-
-        console.log(`Restoring ${devices.length} session(s)...`);
-
-        for (const device of devices) {
-            const authDir = path.join(AUTH_DIR, device.device_id);
-            if (fs.existsSync(authDir)) {
-                try {
-                    await createSession(device.device_id);
-                    console.log(`[${device.device_id}] Session restore initiated`);
-                } catch (err) {
-                    console.error(`[${device.device_id}] Failed to restore session:`, err.message);
-                }
-            }
-        }
-    } catch (err) {
-        console.error('Error restoring sessions:', err.message);
-    }
-}
-
-/**
- * Format a phone number into a WhatsApp JID.
- */
-function formatJID(number) {
-    if (number.includes('@')) {
-        return number;
-    }
-    // Strip any non-digit characters
-    const clean = number.replace(/\D/g, '');
-    return `${clean}@s.whatsapp.net`;
-}
-
-/**
- * Fetch all groups the device is participating in.
+ * Fetch all WhatsApp groups that the connected device participates in.
+ * 
+ * @param {string} deviceId - Connected device ID
+ * @returns {Promise<Array<{ id: string, subject: string, creation: number, owner: string, desc: string, participantsCount: number }>>}
  */
 async function getGroups(deviceId) {
     const socket = sessionManager.getSession(deviceId);
@@ -285,7 +288,7 @@ async function getGroups(deviceId) {
     }
 
     const groups = await socket.groupFetchAllParticipating();
-    return Object.values(groups).map(g => ({
+    return Object.values(groups).map((g) => ({
         id: g.id,
         subject: g.subject,
         creation: g.creation,
@@ -296,7 +299,34 @@ async function getGroups(deviceId) {
 }
 
 /**
- * Delete a session: close socket, remove from memory, delete auth files.
+ * Restore all previously connected or disconnected sessions on server startup.
+ */
+async function restoreAllSessions() {
+    try {
+        const devices = await dbAll("SELECT device_id FROM devices WHERE status IN ('connected', 'disconnected')");
+        console.log(`Restoring ${devices.length} session(s)...`);
+
+        for (const device of devices) {
+            try {
+                await createSession(device.device_id);
+                console.log(`[${device.device_id}] Session restore initiated`);
+            } catch (err) {
+                console.error(`[${device.device_id}] Failed to restore session:`, err.message);
+            }
+        }
+    } catch (err) {
+        console.error('Error restoring sessions:', err.message);
+    }
+}
+
+/**
+ * Permanently delete a device session:
+ * - Cancels pending reconnect timers
+ * - Closes WebSocket and logs out from WhatsApp
+ * - Removes state from memory
+ * - Purges auth state directory from disk
+ * 
+ * @param {string} deviceId - Device identifier to delete
  */
 async function deleteSession(deviceId) {
     const socket = sessionManager.getSession(deviceId);
@@ -307,15 +337,11 @@ async function deleteSession(deviceId) {
             socket.end();
         } catch (_) { }
     }
+
     sessionManager.removeSession(deviceId);
 
-    // Remove auth state from disk
-    const authDir = path.join(AUTH_DIR, deviceId);
-    try {
-        if (fs.existsSync(authDir)) {
-            fs.rmSync(authDir, { recursive: true, force: true });
-        }
-    } catch (_) { }
+    // Purge auth credentials from Redis
+    await purgeRedisAuthState(deviceId);
 
     console.log(`[${deviceId}] Session deleted and cleaned up`);
 }
@@ -330,4 +356,5 @@ module.exports = {
     getGroups,
     restoreAllSessions,
     deleteSession,
+    formatJID,
 };

@@ -1,0 +1,137 @@
+/* ── Responsive Viewport Rules ─────────────────────────────────────── */
+
+/* Medium tablets */
+@media (max-width: 900px) {
+    .main-content {
+        padding: 1.5rem 1.5rem 2.5rem;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    :root {
+        --sidebar-w: 260px;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+        box-shadow: none;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, .3);
+    }
+
+    .sidebar-overlay.visible {
+        display: block;
+    }
+
+    .mobile-header {
+        display: flex;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 1rem 1rem 2rem;
+    }
+
+    .section-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .auth-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .docs-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .plan-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .docs-table th,
+    .docs-table td {
+        padding: .45rem .5rem;
+        font-size: .78rem;
+    }
+
+    .device-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .device-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: .25rem;
+    }
+
+    .card-header {
+        flex-direction: row;
+    }
+
+    .modal {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+    }
+
+    .toast-container {
+        top: auto;
+        bottom: 1rem;
+        right: 1rem;
+    }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+    .main-content {
+        padding: .75rem .75rem 2rem;
+    }
+
+    .card {
+        padding: 1.1rem;
+    }
+
+    .section-header {
+        margin-bottom: 1rem;
+    }
+
+    .btn {
+        padding: .55rem 1rem;
+        font-size: .82rem;
+    }
+
+    .plan-price {
+        font-size: 1.6rem;
+    }
+
+    .api-key-display {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .docs-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Desktop: hide mobile header */
+@media (min-width: 769px) {
+    .mobile-header {
+        display: none !important;
+    }
+
+    .sidebar-overlay {
+        display: none !important;
+    }
+}

@@ -1,0 +1,107 @@
+/* ── CSS Variables, Reset & Base Typography ───────────────────────── */
+
+:root {
+    /* Core Palette */
+    --navy: #0f172a;
+    --navy-light: #1e293b;
+    --navy-mid: #334155;
+    --blue: #3b82f6;
+    --blue-hover: #2563eb;
+    --blue-light: #eff6ff;
+    --green: #22c55e;
+    --green-hover: #16a34a;
+    --green-dim: #15803d;
+    --red: #ef4444;
+    --red-hover: #dc2626;
+    --white: #ffffff;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-700: #334155;
+    --black: #020617;
+
+    /* Spacing */
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 5px;
+
+    /* Shadows */
+    --shadow: 0 1px 4px rgba(0, 0, 0, .07), 0 1px 2px rgba(0, 0, 0, .05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, .08), 0 2px 6px rgba(0, 0, 0, .05);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, .12), 0 4px 8px rgba(0, 0, 0, .06);
+
+    /* Animation */
+    --transition: all .18s ease;
+
+    /* Typography */
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Sidebar width */
+    --sidebar-w: 252px;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 15px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font);
+    background: var(--gray-50);
+    color: var(--black);
+    min-height: 100vh;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── Utility Classes ──────────────────────────────────────────────────────── */
+.hidden {
+    display: none !important;
+}
+
+.text-green {
+    color: var(--green);
+}
+
+.text-red {
+    color: var(--red);
+}
+
+.text-gray {
+    color: var(--gray-500);
+}
+
+.text-sm {
+    font-size: .85rem;
+}
+
+.mt-1 {
+    margin-top: .5rem;
+}
+
+.mt-2 {
+    margin-top: 1rem;
+}
+
+.mt-3 {
+    margin-top: 1.5rem;
+}
+
+.mb-2 {
+    margin-bottom: 1rem;
+}
+
+.gap-1 {
+    gap: .5rem;
+}

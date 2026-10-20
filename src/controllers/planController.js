@@ -2,11 +2,13 @@ const { dbGet, dbRun, dbAll } = require('../config/db');
 
 /**
  * GET /plans/list
- * Public: List all active plans for purchase page.
+ * Public: List all active plans for purchase page, ordered by price.
  */
 async function listPlans(req, res) {
     try {
-        const plans = dbAll('SELECT id, name, description, price, duration_days, device_limit, message_limit FROM plans WHERE is_active = 1 ORDER BY price ASC', []);
+        const plans = await dbAll(
+            'SELECT id, name, description, price, duration_days, device_limit, message_limit FROM plans WHERE is_active = TRUE ORDER BY price ASC'
+        );
         return res.json({ success: true, plans });
     } catch (err) {
         console.error('List plans error:', err);
@@ -16,11 +18,11 @@ async function listPlans(req, res) {
 
 /**
  * GET /plans/all
- * Admin: List ALL plans (including inactive).
+ * Admin: List ALL plans (including inactive/hidden).
  */
 async function listAllPlans(req, res) {
     try {
-        const plans = dbAll('SELECT * FROM plans ORDER BY created_at DESC', []);
+        const plans = await dbAll('SELECT * FROM plans ORDER BY created_at DESC');
         return res.json({ success: true, plans });
     } catch (err) {
         console.error('List all plans error:', err);
@@ -30,7 +32,7 @@ async function listAllPlans(req, res) {
 
 /**
  * POST /plans/create
- * Admin: Create a new plan.
+ * Admin: Create a new subscription tier.
  * Body: { name, description, price, durationDays, deviceLimit, messageLimit }
  */
 async function createPlan(req, res) {
@@ -38,12 +40,24 @@ async function createPlan(req, res) {
         const { name, description, price, durationDays, deviceLimit, messageLimit } = req.body;
 
         if (!name || price === undefined || !durationDays || !deviceLimit || !messageLimit) {
-            return res.status(400).json({ success: false, error: 'name, price, durationDays, deviceLimit, and messageLimit are required' });
+            return res.status(400).json({
+                success: false,
+                error: 'name, price, durationDays, deviceLimit, and messageLimit are required',
+            });
         }
 
-        const result = dbRun(
+        const parsedPrice = parseFloat(price);
+        const parsedDuration = parseInt(durationDays, 10);
+        const parsedDevices = parseInt(deviceLimit, 10);
+        const parsedMessages = parseInt(messageLimit, 10);
+
+        if (isNaN(parsedPrice) || isNaN(parsedDuration) || isNaN(parsedDevices) || isNaN(parsedMessages)) {
+            return res.status(400).json({ success: false, error: 'price, durationDays, deviceLimit, and messageLimit must be valid numbers' });
+        }
+
+        const result = await dbRun(
             'INSERT INTO plans (name, description, price, duration_days, device_limit, message_limit) VALUES (?, ?, ?, ?, ?, ?)',
-            [name, description || '', price, durationDays, deviceLimit, messageLimit]
+            [name.trim(), description?.trim() || '', parsedPrice, parsedDuration, parsedDevices, parsedMessages]
         );
 
         return res.status(201).json({ success: true, planId: result.lastID, message: 'Plan created successfully' });
@@ -55,14 +69,14 @@ async function createPlan(req, res) {
 
 /**
  * PUT /plans/:id
- * Admin: Update a plan.
+ * Admin: Update an existing plan.
  */
 async function updatePlan(req, res) {
     try {
         const planId = req.params.id;
         const { name, description, price, durationDays, deviceLimit, messageLimit, isActive } = req.body;
 
-        const plan = dbGet('SELECT id FROM plans WHERE id = ?', [planId]);
+        const plan = await dbGet('SELECT id FROM plans WHERE id = ?', [planId]);
         if (!plan) {
             return res.status(404).json({ success: false, error: 'Plan not found' });
         }
@@ -70,20 +84,41 @@ async function updatePlan(req, res) {
         const updates = [];
         const params = [];
 
-        if (name !== undefined) { updates.push('name = ?'); params.push(name); }
-        if (description !== undefined) { updates.push('description = ?'); params.push(description); }
-        if (price !== undefined) { updates.push('price = ?'); params.push(price); }
-        if (durationDays !== undefined) { updates.push('duration_days = ?'); params.push(durationDays); }
-        if (deviceLimit !== undefined) { updates.push('device_limit = ?'); params.push(deviceLimit); }
-        if (messageLimit !== undefined) { updates.push('message_limit = ?'); params.push(messageLimit); }
-        if (isActive !== undefined) { updates.push('is_active = ?'); params.push(isActive ? 1 : 0); }
+        if (name !== undefined) {
+            updates.push('name = ?');
+            params.push(name.trim());
+        }
+        if (description !== undefined) {
+            updates.push('description = ?');
+            params.push(description.trim());
+        }
+        if (price !== undefined) {
+            updates.push('price = ?');
+            params.push(parseFloat(price));
+        }
+        if (durationDays !== undefined) {
+            updates.push('duration_days = ?');
+            params.push(parseInt(durationDays, 10));
+        }
+        if (deviceLimit !== undefined) {
+            updates.push('device_limit = ?');
+            params.push(parseInt(deviceLimit, 10));
+        }
+        if (messageLimit !== undefined) {
+            updates.push('message_limit = ?');
+            params.push(parseInt(messageLimit, 10));
+        }
+        if (isActive !== undefined) {
+            updates.push('is_active = ?');
+            params.push(isActive ? true : false);
+        }
 
         if (updates.length === 0) {
             return res.status(400).json({ success: false, error: 'No fields to update' });
         }
 
         params.push(planId);
-        dbRun(`UPDATE plans SET ${updates.join(', ')} WHERE id = ?`, params);
+        await dbRun(`UPDATE plans SET ${updates.join(', ')} WHERE id = ?`, params);
 
         return res.json({ success: true, message: 'Plan updated' });
     } catch (err) {
@@ -94,12 +129,12 @@ async function updatePlan(req, res) {
 
 /**
  * DELETE /plans/:id
- * Admin: Delete a plan (soft delete — set is_active = 0).
+ * Admin: Soft-delete a plan (set is_active = FALSE).
  */
 async function deletePlan(req, res) {
     try {
         const planId = req.params.id;
-        dbRun('UPDATE plans SET is_active = 0 WHERE id = ?', [planId]);
+        await dbRun('UPDATE plans SET is_active = FALSE WHERE id = ?', [planId]);
         return res.json({ success: true, message: 'Plan deactivated' });
     } catch (err) {
         console.error('Delete plan error:', err);
@@ -107,4 +142,10 @@ async function deletePlan(req, res) {
     }
 }
 
-module.exports = { listPlans, listAllPlans, createPlan, updatePlan, deletePlan };
+module.exports = {
+    listPlans,
+    listAllPlans,
+    createPlan,
+    updatePlan,
+    deletePlan,
+};

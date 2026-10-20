@@ -1,10 +1,12 @@
 {
   "name": "wa-api",
   "version": "1.0.0",
-  "description": "WhatsApp Multi-Session API with Dashboard UI — powered by Baileys & better-sqlite3",
+  "description": "WhatsApp Multi-Session Gateway with Dashboard UI — powered by Express 5, Baileys, Redis & PostgreSQL",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "migrate:pg": "node scripts/migrate-sqlite-to-pg.js",
+    "reset:pg-password": "scripts\\reset-pg-password.bat",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {
@@ -23,12 +25,13 @@
     "@whiskeysockets/baileys": "^7.0.0-rc.9",
     "axios": "^1.13.5",
     "bcrypt": "^6.0.0",
-    "better-sqlite3": "^12.6.2",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
+    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1",
     "pino": "^10.3.1",
     "qrcode": "^1.5.4"
   }

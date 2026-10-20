@@ -1,34 +1,43 @@
 const { dbGet } = require('../config/db');
+const { isSubscriptionActive } = require('../services/quotaService');
 
 /**
  * Trial/Plan expiry middleware.
  * Must be used AFTER authMiddleware (req.user must be set).
- * Admins are fully exempt.
- * Returns 402 TRIAL_EXPIRED if the user's trial has expired AND they have no active paid plan.
+ * Admins are fully exempt from database check.
+ * Attaches req.userRecord so subsequent controllers avoid re-querying user data.
  */
-function trialMiddleware(req, res, next) {
+async function trialMiddleware(req, res, next) {
     try {
-        const user = dbGet(
-            'SELECT role, trial_expires_at, plan_expires_at, current_plan_id FROM users WHERE id = ?',
+        // Fast-path: Admins bypass subscription checks without DB query
+        if (req.user?.role === 'admin') {
+            return next();
+        }
+
+        const user = await dbGet(
+            'SELECT id, email, role, device_limit, message_limit, trial_expires_at, plan_expires_at, current_plan_id, is_active FROM users WHERE id = ?',
             [req.user.id]
         );
 
-        // Admins are always allowed
-        if (!user || user.role === 'admin') return next();
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
 
-        const now = new Date();
-        const trialExpired = user.trial_expires_at && new Date(user.trial_expires_at) < now;
-        const planActive = user.current_plan_id &&
-            (!user.plan_expires_at || new Date(user.plan_expires_at) >= now);
+        if (!user.is_active) {
+            return res.status(403).json({ success: false, error: 'Account has been disabled. Contact admin.' });
+        }
 
-        // Allow if trial is still valid OR there is an active plan
-        if (!trialExpired || planActive) return next();
+        if (!isSubscriptionActive(user)) {
+            return res.status(402).json({
+                success: false,
+                error: 'TRIAL_EXPIRED',
+                message: 'Your trial has expired. Please contact the administrator to activate a plan.',
+            });
+        }
 
-        return res.status(402).json({
-            success: false,
-            error: 'TRIAL_EXPIRED',
-            message: 'Your trial has expired. Please contact the administrator to activate a plan.',
-        });
+        // Cache user record for downstream handlers (e.g. device creation quota check)
+        req.userRecord = user;
+        next();
     } catch (err) {
         console.error('Trial middleware error:', err);
         return res.status(500).json({ success: false, error: 'Internal server error' });

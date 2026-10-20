@@ -1,0 +1,189 @@
+/* ── App Shell & Core Layout ────────────────────────────────────────── */
+
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+.sidebar {
+    width: var(--sidebar-w);
+    background: linear-gradient(180deg, var(--navy) 0%, #0d1526 100%);
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 200;
+    transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+    border-right: 1px solid rgba(255, 255, 255, .04);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sidebar-brand {
+    padding: 1.4rem 1.25rem 1.2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
+    margin-bottom: .75rem;
+    flex-shrink: 0;
+}
+
+.sidebar-brand h1 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    color: var(--white);
+}
+
+.sidebar-brand h1 .icon {
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(135deg, var(--green) 0%, #16a34a 100%);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, .35);
+    flex-shrink: 0;
+}
+
+.sidebar-brand small {
+    display: block;
+    font-size: .7rem;
+    color: var(--gray-400);
+    margin-top: .2rem;
+    letter-spacing: .02em;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: .25rem .75rem;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .62rem .9rem;
+    border-radius: var(--radius-sm);
+    color: var(--gray-400);
+    font-size: .875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    margin-bottom: 2px;
+    position: relative;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, .07);
+    color: var(--white);
+}
+
+.nav-item.active {
+    background: linear-gradient(90deg, var(--blue) 0%, #2563eb 100%);
+    color: var(--white);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, .35);
+}
+
+.nav-item .nav-icon {
+    font-size: 1.05rem;
+    width: 21px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.sidebar-footer {
+    padding: .9rem 1rem;
+    border-top: 1px solid rgba(255, 255, 255, .07);
+    margin: 0 .75rem .75rem;
+    flex-shrink: 0;
+}
+
+.sidebar-footer .user-info {
+    font-size: .75rem;
+    color: var(--gray-400);
+    margin-bottom: .6rem;
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+.btn-logout {
+    width: 100%;
+    padding: .48rem;
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, .5);
+    color: var(--red);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: .8rem;
+    font-weight: 600;
+    font-family: var(--font);
+    transition: var(--transition);
+}
+
+.btn-logout:hover {
+    background: var(--red);
+    border-color: var(--red);
+    color: var(--white);
+}
+
+/* ── Mobile Header ────────────────────────────────────────────────────────── */
+.mobile-header {
+    display: none;
+    align-items: center;
+    gap: .75rem;
+    padding: .75rem 1rem;
+    background: var(--navy);
+    color: var(--white);
+    position: sticky;
+    top: 0;
+    z-index: 150;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+}
+
+.mobile-header button {
+    background: none;
+    border: none;
+    color: var(--white);
+    font-size: 1.35rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: .15rem;
+}
+
+.mobile-header span {
+    font-size: .95rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+}
+
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .5);
+    z-index: 190;
+    backdrop-filter: blur(2px);
+}
+
+/* ── Main Content ─────────────────────────────────────────────────────────── */
+.main-content {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 2rem 2rem 3rem;
+    max-width: calc(var(--sidebar-w) + 900px);
+    min-width: 0;
+}

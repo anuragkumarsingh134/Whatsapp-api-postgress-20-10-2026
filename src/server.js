@@ -12,13 +12,21 @@ const deviceRoutes = require('./routes/deviceRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const planRoutes = require('./routes/planRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Middleware ───────────────────────────────────────────────
+// ── Core Middleware ──────────────────────────────────────────
 app.use(cors());
-app.use(express.json());
+
+// Parse JSON while capturing raw body buffer for Cashfree webhook HMAC verification
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf;
+    },
+}));
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
@@ -32,20 +40,27 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// ── Routes ──────────────────────────────────────────────────
+// ── Application Routes ───────────────────────────────────────
 app.use('/auth', authRoutes);
 app.use('/device', deviceRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/admin', adminRoutes);
 app.use('/plans', planRoutes);
+app.use('/payment', paymentRoutes);
 
 // Health check
-app.get('/', (req, res) => {
+app.get('/health', (req, res) => {
     res.json({
         success: true,
-        message: 'WhatsApp Multi-Session API is running',
+        message: 'WhatsApp Multi-Session API is operational',
         version: '1.0.0',
+        uptime: process.uptime(),
     });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 // 404 handler
@@ -55,22 +70,22 @@ app.use((req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-    console.error('Unhandled error:', err);
+    console.error('Unhandled server error:', err);
     res.status(500).json({ success: false, error: 'Internal server error' });
 });
 
-// ── Start ───────────────────────────────────────────────────
+// ── Server Bootstrap ─────────────────────────────────────────
 async function start() {
     try {
-        // Initialize database (synchronous with better-sqlite3)
-        initializeDatabase();
+        // Initialize PostgreSQL database pool and run schema migrations
+        await initializeDatabase();
 
         // Start HTTP server
         app.listen(PORT, () => {
             console.log(`Server running on http://localhost:${PORT}`);
         });
 
-        // Restore WhatsApp sessions after a short delay
+        // Restore active WhatsApp sessions with existing credentials after server spin-up
         setTimeout(async () => {
             await restoreAllSessions();
         }, 2000);
