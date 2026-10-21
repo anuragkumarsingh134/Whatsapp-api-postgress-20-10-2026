@@ -1,9 +1,13 @@
 /* ── Core Constants, Utilities & Notifications ─────────────────── */
 
-const API = window.location.origin;
-let token = localStorage.getItem('wa_token');
-let user = JSON.parse(localStorage.getItem('wa_user') || 'null');
-let qrInterval = null;
+// Safe global application variables across modules and cached scripts
+window.API = window.API || window.location.origin;
+var API = window.API;
+window.token = window.token || localStorage.getItem('wa_token');
+var token = window.token;
+window.user = window.user || JSON.parse(localStorage.getItem('wa_user') || 'null');
+var user = window.user;
+var qrInterval = window.qrInterval || null;
 
 /**
  * Normalizes phone number input:

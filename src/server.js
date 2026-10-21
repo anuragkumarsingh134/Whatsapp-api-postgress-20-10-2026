@@ -29,7 +29,14 @@ app.use(express.json({
 
 app.use(express.urlencoded({ extended: true }));
 // Serve static files but disable auto-serving of index.html so the landing page route takes over
-app.use(express.static(path.join(__dirname, '..', 'public'), { index: false }));
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+    index: false,
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
+            res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+        }
+    }
+}));
 
 // Rate limiter: 60 requests per minute per IP
 const limiter = rateLimit({
