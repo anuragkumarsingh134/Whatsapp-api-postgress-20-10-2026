@@ -56,8 +56,14 @@ async function handleLogin(e) {
 
         token = data.token;
         user = data.user;
+        window.token = token;
+        window.user = user;
         localStorage.setItem('wa_token', token);
         localStorage.setItem('wa_user', JSON.stringify(user));
+        localStorage.setItem('wa_last_activity', Date.now().toString());
+        if (typeof initInactivityTimer === 'function') {
+            initInactivityTimer();
+        }
         toast('Logged in successfully', 'success');
         showDashboard();
     } catch (err) {
@@ -88,10 +94,5 @@ async function handleRegister(e) {
 }
 
 function logout() {
-    token = null;
-    user = null;
-    localStorage.removeItem('wa_token');
-    localStorage.removeItem('wa_user');
-    // Redirect back to the landing page on logout
-    window.location.href = '/';
+    handleSessionExpired('You have been signed out.');
 }

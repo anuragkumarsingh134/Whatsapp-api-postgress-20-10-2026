@@ -1,22 +1,43 @@
 /* ── Main Application Bootstrap & Navigation ────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Check initial auth state
-    if (token && user) {
+    // Check initial auth state, token expiration, and idle timeout
+    if (token && user && !isTokenExpired(token)) {
+        const lastActive = parseInt(localStorage.getItem('wa_last_activity') || '0', 10);
+        const MAX_IDLE_MS = 30 * 60 * 1000; // 30 minutes standard idle timeout
+        if (lastActive && (Date.now() - lastActive > MAX_IDLE_MS)) {
+            handleSessionExpired('You were signed out due to 30 minutes of inactivity.');
+            return;
+        }
+
+        // Active session verified
+        localStorage.setItem('wa_last_activity', Date.now().toString());
+        if (typeof initInactivityTimer === 'function') {
+            initInactivityTimer();
+        }
         showDashboard();
     } else {
-        showAuth();
-        // Handle hash-based routing from the landing page CTA buttons:
-        // /app#register  → show register form directly
-        // /app#login     → show login form (default)
-        const hash = window.location.hash;
-        if (hash === '#register') {
-            showRegister();
-        } else {
-            showLogin();
+        // If expired or invalid token existed in storage, clear it
+        if (token) {
+            handleSessionExpired('Your session has expired. Please sign in again.');
+            return;
         }
-        // Clean up the hash without triggering a page reload
-        if (hash) history.replaceState(null, '', window.location.pathname);
+
+        // Handle hash-based entry from landing page buttons (#login or #register)
+        const hash = window.location.hash;
+        if (hash === '#register' || hash === '#login') {
+            showAuth();
+            if (hash === '#register') {
+                showRegister();
+            } else {
+                showLogin();
+            }
+            if (hash) history.replaceState(null, '', window.location.pathname);
+        } else {
+            // Unauthenticated user without hash — automatically route to the landing page
+            window.location.href = '/';
+            return;
+        }
     }
 
     // Attach form event listeners safely

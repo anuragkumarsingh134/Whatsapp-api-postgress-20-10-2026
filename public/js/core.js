@@ -10,6 +10,94 @@ var user = window.user;
 var qrInterval = window.qrInterval || null;
 
 /**
+ * Decodes and inspects JWT payload to verify if token is expired.
+ */
+function isTokenExpired(tokenStr) {
+    if (!tokenStr || typeof tokenStr !== 'string') return true;
+    try {
+        const parts = tokenStr.split('.');
+        if (parts.length !== 3) return true;
+        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if (!payload.exp) return false;
+        return Math.floor(Date.now() / 1000) >= payload.exp;
+    } catch (e) {
+        return true;
+    }
+}
+
+/**
+ * Handles automatic logout & session termination.
+ * Clears credentials, stores notice, and routes automatically to the landing page.
+ */
+function handleSessionExpired(reason = 'Your session has expired. Please sign in again.') {
+    window.token = null;
+    token = null;
+    window.user = null;
+    user = null;
+    localStorage.removeItem('wa_token');
+    localStorage.removeItem('wa_user');
+    localStorage.removeItem('wa_last_activity');
+    if (reason) {
+        sessionStorage.setItem('auth_notice', reason);
+    }
+    window.location.href = '/';
+}
+
+/**
+ * Global fetch interceptor: automatically logs out and redirects to landing page on 401 Unauthorized.
+ */
+const _origFetch = window.fetch;
+window.fetch = async function(...args) {
+    const res = await _origFetch.apply(this, args);
+    if (res.status === 401) {
+        const url = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
+        if (!url.includes('/auth/login') && !url.includes('/auth/register')) {
+            handleSessionExpired('Session expired or invalid. Please sign in again.');
+        }
+    }
+    return res;
+};
+
+/**
+ * Inactivity session timeout manager (Standard 30-minute idle limit).
+ */
+let _inactivityTimer = null;
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+
+function resetInactivityTimer() {
+    localStorage.setItem('wa_last_activity', Date.now().toString());
+    if (_inactivityTimer) clearTimeout(_inactivityTimer);
+    if (window.token) {
+        _inactivityTimer = setTimeout(() => {
+            handleSessionExpired('You have been logged out due to 30 minutes of inactivity.');
+        }, IDLE_TIMEOUT_MS);
+    }
+}
+
+function initInactivityTimer() {
+    ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'].forEach(evt => {
+        window.addEventListener(evt, resetInactivityTimer, { passive: true });
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && window.token) {
+            const lastActive = parseInt(localStorage.getItem('wa_last_activity') || '0', 10);
+            if (lastActive && (Date.now() - lastActive > IDLE_TIMEOUT_MS)) {
+                handleSessionExpired('You were signed out due to inactivity.');
+                return;
+            }
+            if (isTokenExpired(window.token)) {
+                handleSessionExpired('Your session has expired. Please sign in again.');
+                return;
+            }
+            resetInactivityTimer();
+        }
+    });
+
+    resetInactivityTimer();
+}
+
+/**
  * Normalizes phone number input:
  * - If Group JID (contains @), retains as-is.
  * - If phone number, strips +, -, spaces, parentheses.
