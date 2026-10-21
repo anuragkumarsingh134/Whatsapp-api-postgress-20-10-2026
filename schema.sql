@@ -50,8 +50,13 @@ CREATE TABLE IF NOT EXISTS plans (
     device_limit INT NOT NULL DEFAULT 3,
     message_limit INT NOT NULL DEFAULT 100,
     is_active BOOLEAN DEFAULT TRUE,
+    is_featured BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Safe migration: add is_featured column if it doesn't exist yet
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE;
+
 
 -- 5. Orders Table
 CREATE TABLE IF NOT EXISTS orders (

@@ -44,7 +44,7 @@ async function loadPlans() {
         }
 
         container.innerHTML = data.plans.map((p, i) => {
-            const isPopular = i === Math.floor(data.plans.length / 2);
+            const isPopular = p.is_featured || (data.plans.every(x => !x.is_featured) && i === Math.floor(data.plans.length / 2));
             return `
             <div class="plan-card ${isPopular ? 'plan-popular' : ''}">
                 ${isPopular ? '<div class="plan-badge">Most Popular</div>' : ''}

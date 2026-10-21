@@ -7,7 +7,7 @@ const { dbGet, dbRun, dbAll } = require('../config/db');
 async function listPlans(req, res) {
     try {
         const plans = await dbAll(
-            'SELECT id, name, description, price, duration_days, device_limit, message_limit FROM plans WHERE is_active = TRUE ORDER BY price ASC'
+            'SELECT id, name, description, price, duration_days, device_limit, message_limit, is_featured FROM plans WHERE is_active = TRUE ORDER BY price ASC'
         );
         return res.json({ success: true, plans });
     } catch (err) {
@@ -37,7 +37,7 @@ async function listAllPlans(req, res) {
  */
 async function createPlan(req, res) {
     try {
-        const { name, description, price, durationDays, deviceLimit, messageLimit } = req.body;
+        const { name, description, price, durationDays, deviceLimit, messageLimit, isFeatured } = req.body;
 
         if (!name || price === undefined || !durationDays || !deviceLimit || !messageLimit) {
             return res.status(400).json({
@@ -56,8 +56,8 @@ async function createPlan(req, res) {
         }
 
         const result = await dbRun(
-            'INSERT INTO plans (name, description, price, duration_days, device_limit, message_limit) VALUES (?, ?, ?, ?, ?, ?)',
-            [name.trim(), description?.trim() || '', parsedPrice, parsedDuration, parsedDevices, parsedMessages]
+            'INSERT INTO plans (name, description, price, duration_days, device_limit, message_limit, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [name.trim(), description?.trim() || '', parsedPrice, parsedDuration, parsedDevices, parsedMessages, isFeatured ? true : false]
         );
 
         return res.status(201).json({ success: true, planId: result.lastID, message: 'Plan created successfully' });
@@ -74,7 +74,7 @@ async function createPlan(req, res) {
 async function updatePlan(req, res) {
     try {
         const planId = req.params.id;
-        const { name, description, price, durationDays, deviceLimit, messageLimit, isActive } = req.body;
+        const { name, description, price, durationDays, deviceLimit, messageLimit, isActive, isFeatured } = req.body;
 
         const plan = await dbGet('SELECT id FROM plans WHERE id = ?', [planId]);
         if (!plan) {
@@ -112,6 +112,10 @@ async function updatePlan(req, res) {
             updates.push('is_active = ?');
             params.push(isActive ? true : false);
         }
+        if (isFeatured !== undefined) {
+            updates.push('is_featured = ?');
+            params.push(isFeatured ? true : false);
+        }
 
         if (updates.length === 0) {
             return res.status(400).json({ success: false, error: 'No fields to update' });
@@ -134,8 +138,13 @@ async function updatePlan(req, res) {
 async function deletePlan(req, res) {
     try {
         const planId = req.params.id;
-        await dbRun('UPDATE plans SET is_active = FALSE WHERE id = ?', [planId]);
-        return res.json({ success: true, message: 'Plan deactivated' });
+        try {
+            await dbRun('DELETE FROM plans WHERE id = ?', [planId]);
+            return res.json({ success: true, message: 'Plan deleted permanently' });
+        } catch (fkErr) {
+            await dbRun('UPDATE plans SET is_active = FALSE WHERE id = ?', [planId]);
+            return res.json({ success: true, message: 'Plan has associated orders, deactivated instead' });
+        }
     } catch (err) {
         console.error('Delete plan error:', err);
         return res.status(500).json({ success: false, error: 'Internal server error' });

@@ -92,6 +92,6 @@ function logout() {
     user = null;
     localStorage.removeItem('wa_token');
     localStorage.removeItem('wa_user');
-    showAuth();
-    toast('Signed out', 'info');
+    // Redirect back to the landing page on logout
+    window.location.href = '/';
 }

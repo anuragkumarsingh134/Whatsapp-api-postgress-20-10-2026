@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WA-API — WhatsApp Multi-Session Gateway & Dashboard</title>
+  <meta name="description" content="Send WhatsApp messages, manage multiple sessions, automate notifications, and integrate with any system using WA-API — the self-hosted WhatsApp Multi-Session API platform.">
+  <meta property="og:title" content="WA-API — WhatsApp Multi-Session Gateway">
+  <meta property="og:description" content="Self-hosted WhatsApp API with multi-device support, real-time messaging, and powerful dashboard.">
+  <meta name="theme-color" content="#25d366">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/landing.css">
+</head>
+<body>
+
+  <!-- Glowing Scroll Progress Bar -->
+  <div class="scroll-progress-bar" id="scrollProgress" aria-hidden="true"></div>
+  <div class="bg-mesh" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo" aria-label="WA-API Home">
+        <div class="nav-logo-icon">💬</div>
+        <div class="nav-logo-text">
+          <strong>WA-API</strong>
+          <span>Multi-Session Gateway</span>
+        </div>
+      </a>
+
+      <ul class="nav-links" role="list">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#plans">Pricing</a></li>
+        <li><a href="#api-preview">API Docs</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+
+      <div class="nav-cta">
+        <a href="/app#login" class="btn-ghost">Sign In</a>
+        <a href="/app#register" class="btn-primary-nav">Get Started <span>&#8594;</span></a>
+      </div>
+
+      <button class="nav-hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Nav -->
+  <div class="mobile-nav" id="mobileNav" role="navigation" aria-label="Mobile navigation">
+    <a href="#features" onclick="closeMobileNav()">Features</a>
+    <a href="#how-it-works" onclick="closeMobileNav()">How It Works</a>
+    <a href="#plans" onclick="closeMobileNav()">Pricing</a>
+    <a href="#api-preview" onclick="closeMobileNav()">API Docs</a>
+    <a href="#contact" onclick="closeMobileNav()">Contact</a>
+    <div class="mobile-nav-cta">
+      <a href="/app#login" class="btn-ghost">Sign In</a>
+      <a href="/app#register" class="btn-primary-nav">Get Started</a>
+    </div>
+  </div>
+
+  <!-- Floating Section Dots (Quick Navigation) -->
+  <nav class="section-nav" id="sectionNav" aria-label="Quick section navigation">
+    <a href="#hero" class="section-dot active" data-title="Top"><span></span></a>
+    <a href="#features" class="section-dot" data-title="Features"><span></span></a>
+    <a href="#how-it-works" class="section-dot" data-title="How It Works"><span></span></a>
+    <a href="#plans" class="section-dot" data-title="Pricing"><span></span></a>
+    <a href="#api-preview" class="section-dot" data-title="API Docs"><span></span></a>
+    <a href="#contact" class="section-dot" data-title="Contact"><span></span></a>
+  </nav>
+
+  <div class="page-content">
+
+    <!-- HERO -->
+    <section id="hero">
+      <div class="hero-inner container">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <span class="badge-dot" aria-hidden="true"></span>
+            Self-Hosted &middot; No Third-Party Fees &middot; Production Ready
+          </div>
+          <h1 class="hero-title">
+            The WhatsApp API<br>
+            <span class="text-gradient">Built for Developers</span><br>
+            &amp; Businesses
+          </h1>
+          <p class="hero-description">
+            Send text, images, and PDFs via WhatsApp &#8212; programmatically.
+            Manage multiple sessions from a single dashboard. Zero enterprise BSP fees.
+            Deploy anywhere in minutes.
+          </p>
+          <div class="hero-actions">
+            <a href="/app#register" class="btn-hero-primary" id="heroGetStarted">&#x1F680; Start Free Trial</a>
+            <a href="#features" class="btn-hero-secondary">Explore Features &#8595;</a>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <strong>7-Day</strong>
+              <span>Free Trial</span>
+            </div>
+            <div class="hero-stat-divider" aria-hidden="true"></div>
+            <div class="hero-stat">
+              <strong>&#8734;</strong>
+              <span>Multi-Session</span>
+            </div>
+            <div class="hero-stat-divider" aria-hidden="true"></div>
+            <div class="hero-stat">
+              <strong>REST</strong>
+              <span>API Integration</span>
+            </div>
+            <div class="hero-stat-divider" aria-hidden="true"></div>
+            <div class="hero-stat">
+              <strong>99.9%</strong>
+              <span>Uptime SLA</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- App Mockup Visual -->
+        <div class="hero-visual" aria-hidden="true">
+          <div class="hero-float-card left">
+            <span>&#x2705;</span> Message Delivered!
+          </div>
+          <div class="hero-float-card bottom">
+            <span style="color:#25d366">&#x25CF;</span> 3 Devices Online
+          </div>
+          <div class="hero-mockup">
+            <div class="mockup-bar">
+              <div class="mockup-dot"></div>
+              <div class="mockup-dot"></div>
+              <div class="mockup-dot"></div>
+              <span class="mockup-title">WA-API Dashboard</span>
+            </div>
+            <div class="mockup-body">
+              <div class="mockup-stat-row">
+                <div class="mockup-stat-card">
+                  <span class="mockup-stat-label">Active Devices</span>
+                  <span class="mockup-stat-value green">4</span>
+                </div>
+                <div class="mockup-stat-card">
+                  <span class="mockup-stat-label">Msgs Today</span>
+                  <span class="mockup-stat-value blue">1,248</span>
+                </div>
+                <div class="mockup-stat-card">
+                  <span class="mockup-stat-label">Daily Quota</span>
+                  <span class="mockup-stat-value">5,000</span>
+                </div>
+                <div class="mockup-stat-card">
+                  <span class="mockup-stat-label">Success Rate</span>
+                  <span class="mockup-stat-value amber">99.2%</span>
+                </div>
+              </div>
+              <div class="mockup-device-list">
+                <div class="mockup-device">
+                  <div class="mockup-device-avatar">&#x1F4F1;</div>
+                  <div class="mockup-device-info">
+                    <div class="mockup-device-name">Sales Team</div>
+                    <div class="mockup-device-num">+91 98765 43210</div>
+                  </div>
+                  <div class="mockup-device-status">Connected</div>
+                </div>
+                <div class="mockup-device">
+                  <div class="mockup-device-avatar">&#x1F4BC;</div>
+                  <div class="mockup-device-info">
+                    <div class="mockup-device-name">Support Bot</div>
+                    <div class="mockup-device-num">+91 91234 56789</div>
+                  </div>
+                  <div class="mockup-device-status">Connected</div>
+                </div>
+                <div class="mockup-device">
+                  <div class="mockup-device-avatar">&#x1F514;</div>
+                  <div class="mockup-device-info">
+                    <div class="mockup-device-name">Alerts Channel</div>
+                    <div class="mockup-device-num">+91 87654 32109</div>
+                  </div>
+                  <div class="mockup-device-status">Connected</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features">
+      <div class="container">
+        <div class="features-header reveal">
+          <div class="section-badge">&#x26A1; Platform Features</div>
+          <h2 class="section-title">Everything You Need to<br>Automate WhatsApp</h2>
+          <p class="section-subtitle">
+            A complete toolkit for developers and businesses to integrate WhatsApp messaging
+            without enterprise licensing costs or third-party cloud dependencies.
+          </p>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card reveal">
+            <div class="feature-icon-wrap green">&#x1F4F1;</div>
+            <div>
+              <h3 class="feature-title">Multi-Device Session Management</h3>
+              <p class="feature-desc">Link multiple WhatsApp numbers to a single account. Each device runs as an isolated session with its own cryptographic keys, QR pairing, and auto-reconnect.</p>
+            </div>
+            <div class="feature-tags">
+              <span class="feature-tag">QR Pairing</span>
+              <span class="feature-tag">Auto Reconnect</span>
+              <span class="feature-tag">Multi-Tenant</span>
+            </div>
+          </div>
+          <div class="feature-card reveal">
+            <div class="feature-icon-wrap blue">&#x2709;&#xFE0F;</div>
+            <div>
+              <h3 class="feature-title">Rich Outbound Messaging</h3>
+              <p class="feature-desc">Send plain text, PDF documents (up to 15 MB), and images with captions to individuals or WhatsApp Group JIDs via a simple REST API call.</p>
+            </div>
+            <div class="feature-tags">
+              <span class="feature-tag">Text</span>
+              <span class="feature-tag">PDF Documents</span>
+              <span class="feature-tag">Images</span>
+              <span class="feature-tag">Group Support</span>
+            </div>
+          </div>
+          <div class="feature-card reveal">
+            <div class="feature-icon-wrap purple">&#x1F511;</div>
+            <div>
+              <h3 class="feature-title">API Key Authentication</h3>
+              <p class="feature-desc">Generate and rotate 32-character hex API keys. Integrate with CRMs, ERPs, webhooks, IoT devices, or any legacy system using simple GET requests.</p>
+            </div>
+            <div class="feature-tags">
+              <span class="feature-tag">JWT Auth</span>
+              <span class="feature-tag">API Keys</span>
+              <span class="feature-tag">GET Endpoints</span>
+            </div>
+          </div>
+          <div class="feature-card reveal">
+            <div class="feature-icon-wrap amber">&#x1F48E;</div>
+            <div>
+              <h3 class="feature-title">Subscription Plans &amp; Quotas</h3>
+              <p class="feature-desc">Built-in 7-day trial, configurable plan tiers, daily message quotas, and device limits. Integrated with Cashfree payment gateway for automated renewals.</p>
+            </div>
+            <div class="feature-tags">
+              <span class="feature-tag">Trials</span>
+              <span class="feature-tag">Plan Tiers</span>
+              <span class="feature-tag">Cashfree</span>
+            </div>
+          </div>
+          <div class="feature-card reveal">
+            <div class="feature-icon-wrap red">&#x1F6E1;&#xFE0F;</div>
+            <div>
+              <h3 class="feature-title">Security &amp; Rate Limiting</h3>
+              <p class="feature-desc">JWT Bearer tokens, API key + device ownership validation, Express rate limiting at 60 req/min per IP, and HMAC SHA-256 webhook verification.</p>
+            </div>
+            <div class="feature-tags">
+              <span class="feature-tag">JWT</span>
+              <span class="feature-tag">Rate Limits</span>
+              <span class="feature-tag">HMAC Webhooks</span>
+            </div>
+          </div>
+          <div class="feature-card reveal">
+            <div class="feature-icon-wrap cyan">&#x1F465;</div>
+            <div>
+              <h3 class="feature-title">Admin Control Panel</h3>
+              <p class="feature-desc">Full admin dashboard to manage users, adjust device quotas, reset message counters, configure payment gateway settings, and manage subscription plans.</p>
+            </div>
+            <div class="feature-tags">
+              <span class="feature-tag">User Management</span>
+              <span class="feature-tag">Quota Control</span>
+              <span class="feature-tag">Plan Config</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how-it-works">
+      <div class="container">
+        <div class="reveal" style="text-align:center; margin-bottom: 0.5rem;">
+          <div class="section-badge">&#x1F680; Quick Start</div>
+          <h2 class="section-title">Up and Running in 4 Steps</h2>
+          <p class="section-subtitle" style="margin: 0 auto;">From sign-up to sending your first WhatsApp message &#8212; no complex setup, no delays.</p>
+        </div>
+        <div class="steps-wrapper">
+          <div class="step-card reveal">
+            <div class="step-number s1">1</div>
+            <h3 class="step-title">Create an Account</h3>
+            <p class="step-desc">Register with your email. Get a free 7-day trial instantly with 3 device slots and 100 messages/day.</p>
+          </div>
+          <div class="step-card reveal">
+            <div class="step-number s2">2</div>
+            <h3 class="step-title">Add a Device</h3>
+            <p class="step-desc">Enter your WhatsApp phone number, scan the QR code from your dashboard, and your device is live.</p>
+          </div>
+          <div class="step-card reveal">
+            <div class="step-number s3">3</div>
+            <h3 class="step-title">Generate API Key</h3>
+            <p class="step-desc">Create your 32-character hex API key from the API section and use it in any HTTP client or code.</p>
+          </div>
+          <div class="step-card reveal">
+            <div class="step-number s4">4</div>
+            <h3 class="step-title">Send Messages</h3>
+            <p class="step-desc">Hit our REST endpoints with your API key, device ID, and message. WhatsApp delivered in seconds.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLANS -->
+    <section id="plans">
+      <div class="container">
+        <div class="plans-header reveal">
+          <div class="section-badge">&#x1F48E; Pricing Plans</div>
+          <h2 class="section-title">Simple, Transparent Pricing</h2>
+          <p class="section-subtitle">Choose the plan that fits your scale. Upgrade or downgrade any time. Contact us for custom enterprise pricing.</p>
+        </div>
+        <div class="plans-grid" id="landingPlansGrid">
+          <!-- Dynamically loaded from database via /plans/list -->
+          <div class="plan-card reveal visible" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+            <div style="font-size: 2rem; margin-bottom: 0.75rem;">💎</div>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Loading live pricing plans...</p>
+          </div>
+        </div>
+        <p style="text-align:center; margin-top: 2rem; font-size: 0.85rem; color: var(--text-muted);">
+          All plans include a 7-day free trial. No credit card required to start.
+          For custom plans, <a href="#contact" style="color: var(--green-400); text-decoration:none;">contact us directly</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- API PREVIEW -->
+    <section id="api-preview">
+      <div class="container">
+        <div class="api-grid">
+          <div class="reveal">
+            <div class="section-badge">&#x2699;&#xFE0F; Developer API</div>
+            <h2 class="section-title">Integrate in Minutes</h2>
+            <p class="section-subtitle">Simple REST endpoints with query-string parameters &#8212; compatible with any language, platform, or legacy system. No complex SDKs required.</p>
+            <div class="api-endpoints">
+              <div class="endpoint-item">
+                <span class="method-badge method-post">POST</span>
+                <span class="endpoint-path">/auth/register</span>
+                <span class="endpoint-label">Create account</span>
+              </div>
+              <div class="endpoint-item">
+                <span class="method-badge method-get">GET</span>
+                <span class="endpoint-path">/api/messages/send-text</span>
+                <span class="endpoint-label">Send text</span>
+              </div>
+              <div class="endpoint-item">
+                <span class="method-badge method-get">GET</span>
+                <span class="endpoint-path">/api/messages/send-pdf</span>
+                <span class="endpoint-label">Send PDF</span>
+              </div>
+              <div class="endpoint-item">
+                <span class="method-badge method-get">GET</span>
+                <span class="endpoint-path">/api/messages/send-image</span>
+                <span class="endpoint-label">Send image</span>
+              </div>
+              <div class="endpoint-item">
+                <span class="method-badge method-post">POST</span>
+                <span class="endpoint-path">/device/create</span>
+                <span class="endpoint-label">Add device</span>
+              </div>
+              <div class="endpoint-item">
+                <span class="method-badge method-del">DEL</span>
+                <span class="endpoint-path">/device/:deviceId</span>
+                <span class="endpoint-label">Remove device</span>
+              </div>
+            </div>
+          </div>
+          <div class="api-code-block reveal">
+            <div class="code-header">
+              <div class="code-dot"></div>
+              <div class="code-dot"></div>
+              <div class="code-dot"></div>
+              <span class="code-lang">HTTP Request</span>
+            </div>
+            <div class="code-body">
+              <div><span class="code-comment"># Send a WhatsApp text message</span></div>
+              <br>
+              <div><span class="code-method">GET</span> <span class="code-url">/api/messages/send-text</span></div>
+              <br>
+              <div><span class="code-key">?deviceId</span><span class="code-punc">=</span><span class="code-val">918919007019</span></div>
+              <div><span class="code-key">&amp;apiKey</span><span class="code-punc">=</span><span class="code-val">a3f8b2c1d4e5f6a7b8c9...</span></div>
+              <div><span class="code-key">&amp;number</span><span class="code-punc">=</span><span class="code-val">919876543210</span></div>
+              <div><span class="code-key">&amp;message</span><span class="code-punc">=</span><span class="code-str">Hello from WA-API!</span></div>
+              <br>
+              <div><span class="code-comment"># Response</span></div>
+              <div><span class="code-punc">{</span></div>
+              <div>&nbsp;&nbsp;<span class="code-str">"success"</span><span class="code-punc">:</span> <span class="code-val">true</span><span class="code-punc">,</span></div>
+              <div>&nbsp;&nbsp;<span class="code-str">"messageId"</span><span class="code-punc">:</span> <span class="code-str">"3EB0..."</span><span class="code-punc">,</span></div>
+              <div>&nbsp;&nbsp;<span class="code-str">"status"</span><span class="code-punc">:</span> <span class="code-str">"sent"</span></div>
+              <div><span class="code-punc">}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section id="trust">
+      <div class="container">
+        <div class="reveal" style="text-align:center; margin-bottom: 3rem;">
+          <div class="section-badge">&#x2764;&#xFE0F; Trusted By Businesses</div>
+          <h2 class="section-title">What Our Users Say</h2>
+        </div>
+        <div class="trust-grid">
+          <div class="trust-card reveal">
+            <div class="trust-stars">&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;</div>
+            <p class="trust-text">"WA-API completely replaced our expensive BSP subscription. We send 2,000+ OTPs daily for a fraction of the cost. Setup was done in one afternoon."</p>
+            <div class="trust-author">
+              <div class="trust-avatar a1">R</div>
+              <div>
+                <div class="trust-name">Rahul Sharma</div>
+                <div class="trust-role">CTO, FinTech Startup &middot; Mumbai</div>
+              </div>
+            </div>
+          </div>
+          <div class="trust-card reveal">
+            <div class="trust-stars">&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;</div>
+            <p class="trust-text">"We use it for order confirmations and invoice delivery. The PDF sending feature is outstanding &#8212; our customers receive invoices instantly on WhatsApp."</p>
+            <div class="trust-author">
+              <div class="trust-avatar a2">P</div>
+              <div>
+                <div class="trust-name">Priya Mehta</div>
+                <div class="trust-role">Operations Head, E-Commerce &middot; Bengaluru</div>
+              </div>
+            </div>
+          </div>
+          <div class="trust-card reveal">
+            <div class="trust-stars">&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;</div>
+            <p class="trust-text">"The multi-device management is a game changer. We run 8 WhatsApp numbers for different support teams from one dashboard. Zero downtime in 3 months."</p>
+            <div class="trust-author">
+              <div class="trust-avatar a3">A</div>
+              <div>
+                <div class="trust-name">Arjun Nair</div>
+                <div class="trust-role">Product Manager, SaaS Platform &middot; Hyderabad</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact">
+      <div class="container">
+        <div class="contact-grid">
+          <div class="reveal">
+            <div class="section-badge">&#x1F4DE; Get In Touch</div>
+            <h2 class="section-title">Let's Talk</h2>
+            <p class="section-subtitle">Need a custom plan, help with setup, or have a technical question? Reach us directly &#8212; we respond fast.</p>
+            <div class="contact-methods">
+              <a href="mailto:anuragkumarsingh1435@gmail.com" class="contact-method" id="emailContact">
+                <div class="contact-method-icon email">&#x1F4E7;</div>
+                <div class="contact-method-info">
+                  <div class="contact-method-label">Email Us</div>
+                  <div class="contact-method-value">anuragkumarsingh1435@gmail.com</div>
+                </div>
+                <span class="contact-method-arrow">&#8594;</span>
+              </a>
+              <a href="tel:+919603761820" class="contact-method" id="phoneContact">
+                <div class="contact-method-icon phone">&#x1F4F1;</div>
+                <div class="contact-method-info">
+                  <div class="contact-method-label">Call / SMS</div>
+                  <div class="contact-method-value">+91 96037 61820</div>
+                </div>
+                <span class="contact-method-arrow">&#8594;</span>
+              </a>
+              <a href="https://wa.me/919603761820?text=Hi!%20I'm%20interested%20in%20WA-API." target="_blank" rel="noopener noreferrer" class="contact-method" id="whatsappContact">
+                <div class="contact-method-icon whatsapp">&#x1F4AC;</div>
+                <div class="contact-method-info">
+                  <div class="contact-method-label">WhatsApp</div>
+                  <div class="contact-method-value">+91 96037 61820</div>
+                </div>
+                <span class="contact-method-arrow">&#8594;</span>
+              </a>
+            </div>
+          </div>
+          <div class="reveal">
+            <div class="cta-banner">
+              <h2>Ready to Automate WhatsApp?</h2>
+              <p>Start your 7-day free trial. No credit card required. Full API access from day one.</p>
+              <div class="cta-actions">
+                <a href="/app#register" class="btn-hero-primary">&#x1F680; Create Free Account</a>
+                <a href="/app#login" class="btn-hero-secondary">Sign In &#8594;</a>
+              </div>
+              <p style="margin-top: 1.5rem; font-size: 0.78rem; color: var(--text-muted);">
+                &#x2713; 3 Devices free &nbsp;&middot;&nbsp; &#x2713; 100 msgs/day &nbsp;&middot;&nbsp; &#x2713; Cancel anytime
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-inner">
+        <div class="footer-top">
+          <div class="footer-brand">
+            <a href="/" class="nav-logo" style="text-decoration:none;">
+              <div class="nav-logo-icon">&#x1F4AC;</div>
+              <div class="nav-logo-text">
+                <strong>WA-API</strong>
+                <span>Multi-Session Gateway</span>
+              </div>
+            </a>
+            <p>Self-hosted WhatsApp Multi-Session API platform for developers and businesses. Send messages, manage sessions, integrate anywhere.</p>
+          </div>
+          <div class="footer-col">
+            <h4>Product</h4>
+            <ul>
+              <li><a href="#features">Features</a></li>
+              <li><a href="#how-it-works">How It Works</a></li>
+              <li><a href="#plans">Pricing</a></li>
+              <li><a href="#api-preview">API Docs</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Account</h4>
+            <ul>
+              <li><a href="/app#register">Sign Up</a></li>
+              <li><a href="/app#login">Sign In</a></li>
+              <li><a href="/app">Dashboard</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Contact</h4>
+            <ul>
+              <li><a href="mailto:anuragkumarsingh1435@gmail.com">Email Support</a></li>
+              <li><a href="tel:+919603761820">+91 96037 61820</a></li>
+              <li><a href="https://wa.me/919603761820" target="_blank" rel="noopener">WhatsApp</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p class="footer-copy">&#169; 2026 WA-API. Built with <span>&#x2665;</span> by Anurag Kumar Singh. All rights reserved.</p>
+          <div class="footer-links">
+            <a href="#features">Features</a>
+            <a href="#plans">Pricing</a>
+            <a href="#contact">Contact</a>
+            <a href="/app">Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+  </div><!-- /.page-content -->
+
+  <!-- High-Performance Smooth Momentum Scroll Engine -->
+  <script src="/js/lenis.min.js"></script>
+  <script>
+    // Initialize Lenis for weightless, friction-free momentum scrolling
+    var lenis = null;
+    if (typeof Lenis !== 'undefined') {
+      lenis = new Lenis({
+        duration: 1.15,
+        easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
+        orientation: 'vertical',
+        gestureOrientation: 'vertical',
+        smoothWheel: true,
+        wheelMultiplier: 1.25, // Effortlessly glides to next section with zero finger strain or resistance
+        touchMultiplier: 1.4,
+        infinite: false,
+      });
+
+      function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+    }
+
+    // Scroll state tracking
+    const navbar = document.getElementById('navbar');
+    const scrollProgress = document.getElementById('scrollProgress');
+    const backToTopBtn = document.getElementById('backToTop');
+
+    function updateScrollState(scrollY) {
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+
+      // Navbar blur & elevation
+      if (navbar) {
+        navbar.classList.toggle('scrolled', scrollY > 20);
+      }
+
+      // Scroll progress bar
+      if (scrollProgress && docHeight > 0) {
+        const progress = Math.min(100, Math.max(0, (scrollY / docHeight) * 100));
+        scrollProgress.style.width = progress + '%';
+      }
+
+      // Back to top button
+      if (backToTopBtn) {
+        backToTopBtn.classList.toggle('show', scrollY > 400);
+      }
+    }
+
+    if (lenis) {
+      lenis.on('scroll', function(e) {
+        updateScrollState(e.scroll);
+      });
+    } else {
+      window.addEventListener('scroll', function() {
+        updateScrollState(window.scrollY || document.documentElement.scrollTop);
+      }, { passive: true });
+    }
+
+    // Mobile nav toggle
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileNav = document.getElementById('mobileNav');
+
+    function closeMobileNav() {
+      mobileNav.classList.remove('open');
+      hamburgerBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    hamburgerBtn.addEventListener('click', function() {
+      var isOpen = mobileNav.classList.toggle('open');
+      hamburgerBtn.setAttribute('aria-expanded', isOpen.toString());
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!navbar.contains(e.target) && !mobileNav.contains(e.target)) {
+        closeMobileNav();
+      }
+    });
+
+    // Frictionless anchor scrolling with accurate navbar offset
+    document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+      anchor.addEventListener('click', function(e) {
+        var href = anchor.getAttribute('href');
+        if (!href || href === '#') return;
+        var target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          if (lenis) {
+            lenis.scrollTo(target, { offset: -72, duration: 1.15 });
+          } else {
+            var navHeight = 72;
+            var elementTop = target.getBoundingClientRect().top + window.pageYOffset;
+            window.scrollTo({
+              top: Math.max(0, elementTop - navHeight),
+              behavior: 'smooth'
+            });
+          }
+          closeMobileNav();
+        }
+      });
+    });
+
+    // Back to top action
+    if (backToTopBtn) {
+      backToTopBtn.addEventListener('click', function() {
+        if (lenis) {
+          lenis.scrollTo(0, { duration: 1.15 });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    }
+
+    // Smooth scroll reveal observer without artificial queue delays
+    var revealObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      revealObserver.observe(el);
+    });
+
+    // Active nav link & Section dots observer
+    var sections = document.querySelectorAll('section[id]');
+    var navAnchorLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+    var sectionDots = document.querySelectorAll('.section-dot');
+    var sectionObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          navAnchorLinks.forEach(function(a) { a.style.color = ''; });
+          var activeLink = document.querySelector('.nav-links a[href="#' + entry.target.id + '"]');
+          if (activeLink) activeLink.style.color = 'var(--green-400)';
+
+          sectionDots.forEach(function(dot) {
+            dot.classList.toggle('active', dot.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, { threshold: 0.35 });
+    sections.forEach(function(s) { sectionObserver.observe(s); });
+
+    // Dynamic Plans Loader from Database
+    async function loadLandingPlans() {
+      var container = document.getElementById('landingPlansGrid');
+      if (!container) return;
+
+      try {
+        var res = await fetch('/plans/list');
+        var data = await res.json();
+
+        if (!data.success || !data.plans || data.plans.length === 0) {
+          container.innerHTML = 
+            '<div class="plan-card reveal visible" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">' +
+              '<div style="font-size: 2rem; margin-bottom: 0.75rem;">💎</div>' +
+              '<h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Custom Plans Available</h3>' +
+              '<p style="color: var(--text-muted); margin-bottom: 1.5rem;">Contact us to activate a plan suited for your message volume.</p>' +
+              '<a href="#contact" class="btn-hero-primary" style="display: inline-block;">Contact Us &#8594;</a>' +
+            '</div>';
+          return;
+        }
+
+        var escapeHtml = function(str) {
+          if (!str) return '';
+          return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+        };
+
+        var hasAnyFeatured = data.plans.some(function(p) { return p.is_featured; });
+
+        container.innerHTML = data.plans.map(function(p, idx) {
+          var isFeatured = p.is_featured || (!hasAnyFeatured && (idx === 1 || data.plans.length === 1));
+          var formattedPrice = parseFloat(p.price).toLocaleString('en-IN');
+          var durationText = p.duration_days == 30 ? '/month' : ('/' + p.duration_days + ' days');
+          var numDevices = parseInt(p.device_limit, 10) || 1;
+          var numMessages = parseInt(p.message_limit, 10) || 100;
+          var isHighTier = numDevices >= 3 || parseFloat(p.price) >= 500;
+          var isTopTier = numDevices >= 10 || parseFloat(p.price) >= 900;
+
+          var defaultDesc = isTopTier
+            ? 'For large-scale operations requiring maximum devices, high message volumes, and dedicated support.'
+            : isHighTier
+            ? 'Built for growing businesses that need reliable multi-device WhatsApp operations.'
+            : 'Perfect for individuals and small projects getting started with WhatsApp automation.';
+
+          return (
+            '<div class="plan-card ' + (isFeatured ? 'popular ' : '') + 'reveal visible">' +
+              '<div class="plan-badge-wrap">' +
+                '<span class="plan-name">' + escapeHtml(p.name) + '</span>' +
+                (isFeatured ? '<span class="plan-popular-badge">Most Popular</span>' : '') +
+              '</div>' +
+              '<div class="plan-price">' +
+                '<span class="plan-currency">&#x20B9;</span>' +
+                '<span class="plan-amount">' + formattedPrice + '</span>' +
+                '<span class="plan-period">' + durationText + '</span>' +
+              '</div>' +
+              '<p class="plan-desc">' + escapeHtml(p.description || defaultDesc) + '</p>' +
+              '<div class="plan-divider"></div>' +
+              '<ul class="plan-features">' +
+                '<li><span class="check">&#x2713;</span> ' + numDevices + ' WhatsApp Device' + (numDevices > 1 ? 's' : '') + '</li>' +
+                '<li><span class="check">&#x2713;</span> ' + numMessages.toLocaleString() + ' Messages / Day</li>' +
+                '<li><span class="check">&#x2713;</span> ' + p.duration_days + ' Days Plan Validity</li>' +
+                '<li><span class="check">&#x2713;</span> REST API Access &amp; Webhooks</li>' +
+                '<li><span class="check">&#x2713;</span> 32-Char Hex API Key Auth</li>' +
+                '<li><span class="check ' + (isHighTier ? '' : 'x') + '">' + (isHighTier ? '&#x2713;' : '&#x2715;') + '</span> Text, Images &amp; PDF Docs</li>' +
+                '<li><span class="check ' + (isHighTier ? '' : 'x') + '">' + (isHighTier ? '&#x2713;' : '&#x2715;') + '</span> WhatsApp Group Messaging</li>' +
+                '<li><span class="check ' + (isTopTier ? '' : 'x') + '">' + (isTopTier ? '&#x2713;' : '&#x2715;') + '</span> Priority Dedicated Support</li>' +
+              '</ul>' +
+              '<a href="/app#register" class="btn-plan ' + (isFeatured ? 'solid' : 'outline') + '">Get Started &#8594;</a>' +
+            '</div>'
+          );
+        }).join('');
+
+      } catch (err) {
+        console.error('Failed to load plans from database:', err);
+        container.innerHTML = 
+          '<div class="plan-card reveal visible" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">' +
+            '<p style="color: var(--text-muted);">View all subscription plans inside your account. <a href="/app#register" style="color:var(--green-400); text-decoration:underline;">Sign up now</a> or <a href="#contact" style="color:var(--green-400); text-decoration:underline;">contact support</a>.</p>' +
+          '</div>';
+      }
+    }
+
+    loadLandingPlans();
+  </script>
+
+  <!-- Floating Back to Top Button -->
+  <button class="back-to-top" id="backToTop" aria-label="Back to top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Back to top">
+    &#8593;
+  </button>
+</body>
+</html>

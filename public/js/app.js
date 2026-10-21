@@ -6,6 +6,17 @@ document.addEventListener('DOMContentLoaded', () => {
         showDashboard();
     } else {
         showAuth();
+        // Handle hash-based routing from the landing page CTA buttons:
+        // /app#register  → show register form directly
+        // /app#login     → show login form (default)
+        const hash = window.location.hash;
+        if (hash === '#register') {
+            showRegister();
+        } else {
+            showLogin();
+        }
+        // Clean up the hash without triggering a page reload
+        if (hash) history.replaceState(null, '', window.location.pathname);
     }
 
     // Attach form event listeners safely

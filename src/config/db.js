@@ -71,6 +71,19 @@ async function initializeDatabase() {
                 await client.query(schemaSql);
                 console.log('PostgreSQL schema and indexes verified.');
             }
+
+            // Seed default plans if table is empty
+            const plansCountRes = await client.query('SELECT COUNT(*)::int AS count FROM plans');
+            if (plansCountRes.rows[0].count === 0) {
+                await client.query(`
+                    INSERT INTO plans (name, description, price, duration_days, device_limit, message_limit, is_featured, is_active)
+                    VALUES 
+                    ('Basic', 'Perfect for individuals and small projects getting started with WhatsApp automation.', 299, 30, 1, 1000, FALSE, TRUE),
+                    ('Pro', 'Built for growing businesses that need reliable multi-device WhatsApp operations.', 599, 30, 3, 5000, TRUE, TRUE),
+                    ('Enterprise', 'For large-scale operations requiring maximum devices, high message volumes, and dedicated support.', 999, 30, 10, 10000, FALSE, TRUE)
+                `);
+                console.log('Seeded default subscription plans.');
+            }
         } finally {
             client.release();
         }

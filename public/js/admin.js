@@ -147,6 +147,7 @@ async function handleCreatePlan(e) {
             durationDays: parseInt(document.getElementById('newPlanDuration').value, 10),
             deviceLimit: parseInt(document.getElementById('newPlanDevices').value, 10),
             messageLimit: parseInt(document.getElementById('newPlanMessages').value, 10),
+            isFeatured: document.getElementById('newPlanFeatured').value === '1',
         };
 
         const res = await fetch(`${API}/plans/create`, {
@@ -166,6 +167,8 @@ async function handleCreatePlan(e) {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
+        const featuredEl = document.getElementById('newPlanFeatured');
+        if (featuredEl) featuredEl.value = '0';
         loadAdminPlans();
     } catch (err) {
         toast(err.message, 'error');
@@ -196,6 +199,7 @@ async function loadAdminPlans() {
                         <th>Duration</th>
                         <th>Devices</th>
                         <th>Msg/Day</th>
+                        <th>Featured</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -204,21 +208,25 @@ async function loadAdminPlans() {
                     ${adminPlansCache.map(p => `
                         <tr>
                             <td style="font-weight:600">${esc(p.name)}</td>
-                            <td>₹${p.price}</td>
+                            <td>&#x20B9;${p.price}</td>
                             <td>${p.duration_days}d</td>
                             <td>${p.device_limit}</td>
                             <td>${p.message_limit}</td>
+                            <td>${p.is_featured ? '<span class="badge badge-yellow">&#x2605; Popular</span>' : '<span style="color:var(--gray-400);font-size:.8rem">&mdash;</span>'}</td>
                             <td><span class="badge ${p.is_active ? 'badge-green' : 'badge-red'}">${p.is_active ? 'Active' : 'Hidden'}</span></td>
                             <td>
-                                <div style="display:flex;gap:.25rem">
-                                    <button class="btn btn-outline btn-sm" onclick="openEditPlanModal(${p.id})">✏️ Edit</button>
-                                    <button class="btn btn-outline btn-sm" onclick="togglePlanActive(${p.id}, ${p.is_active})">${p.is_active ? '🚫 Hide' : '✅ Show'}</button>
+                                <div style="display:flex;gap:.25rem;flex-wrap:wrap">
+                                    <button class="btn btn-outline btn-sm" onclick="openEditPlanModal(${p.id})">&#x270F;&#xFE0F; Edit</button>
+                                    <button class="btn btn-outline btn-sm" onclick="togglePlanActive(${p.id}, ${p.is_active})">${p.is_active ? '&#x1F6AB; Hide' : '&#x2705; Show'}</button>
+                                    <button class="btn btn-outline btn-sm" onclick="togglePlanFeatured(${p.id}, ${p.is_featured})">${p.is_featured ? '&#x2605; Unfeature' : '&#x2606; Feature'}</button>
+                                    <button class="btn btn-red btn-sm" onclick="adminDeletePlan(${p.id})" title="Delete plan">&#x1F5D1;&#xFE0F; Delete</button>
                                 </div>
                             </td>
                         </tr>
                     `).join('')}
                 </tbody>
             </table>`;
+
     } catch (err) {
         toast(err.message, 'error');
     }
@@ -239,6 +247,7 @@ function openEditPlanModal(planId) {
     document.getElementById('editPlanMessages').value = plan.message_limit;
     document.getElementById('editPlanDesc').value = plan.description || '';
     document.getElementById('editPlanIsActive').value = plan.is_active ? '1' : '0';
+    document.getElementById('editPlanFeatured').value = plan.is_featured ? '1' : '0';
 
     document.getElementById('editPlanModal').classList.remove('hidden');
 }
@@ -255,6 +264,7 @@ async function handleEditPlan(e) {
         messageLimit: parseInt(document.getElementById('editPlanMessages').value, 10),
         description: document.getElementById('editPlanDesc').value,
         isActive: document.getElementById('editPlanIsActive').value === '1',
+        isFeatured: document.getElementById('editPlanFeatured').value === '1',
     };
 
     try {
@@ -291,6 +301,43 @@ async function togglePlanActive(planId, currentState) {
         if (!data.success) throw new Error(data.error);
 
         toast(`Plan ${currentState ? 'hidden' : 'shown'}`, 'success');
+        loadAdminPlans();
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+async function togglePlanFeatured(planId, currentState) {
+    try {
+        const res = await fetch(`${API}/plans/${planId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ isFeatured: !currentState })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        toast(`Plan ${currentState ? 'unfeatured' : 'marked as Most Popular'}`, 'success');
+        loadAdminPlans();
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+async function adminDeletePlan(planId) {
+    if (!confirm('Are you sure you want to delete this plan? This action cannot be undone.')) return;
+    try {
+        const res = await fetch(`${API}/plans/${planId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        toast(data.message || 'Plan deleted', 'success');
         loadAdminPlans();
     } catch (err) {
         toast(err.message, 'error');

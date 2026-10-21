@@ -28,7 +28,8 @@ app.use(express.json({
 }));
 
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// Serve static files but disable auto-serving of index.html so the landing page route takes over
+app.use(express.static(path.join(__dirname, '..', 'public'), { index: false }));
 
 // Rate limiter: 60 requests per minute per IP
 const limiter = rateLimit({
@@ -58,8 +59,13 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Root endpoint
+// Root endpoint — serves the marketing landing page
 app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'landing.html'));
+});
+
+// App endpoint — serves the authenticated dashboard SPA
+app.get('/app', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
